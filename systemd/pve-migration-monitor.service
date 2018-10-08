@@ -1,0 +1,12 @@
+[Unit]
+Description=Monitor PVE VM/CT migrations
+ConditionPathExists=/etc/pve-migration-monitor/migration-monitor
+RequiresMountsFor=/etc/pve
+
+[Service]
+ExecStart=/etc/pve-migration-monitor/migration-monitor
+Type=simple
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

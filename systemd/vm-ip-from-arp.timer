@@ -1,0 +1,8 @@
+[Unit]
+Description=Generate resource files with VM/CT public ip, get from ARP table, for failover migration
+
+[Timer]
+OnCalendar=hourly
+
+[Install]
+WantedBy=timers.target

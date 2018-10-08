@@ -1,0 +1,71 @@
+#! /bin/sh
+
+DIR=$(dirname $0)
+usage() {
+    echo "$0 [options]"
+    echo "-h              Show this help"
+    echo "-f <provider>   Enable failover ip scripts and write provider related config"
+}
+
+failover_providers() {
+    find $DIR/scripts -name '*FailoverIP' | sed 's/FailoverIP//' | xargs -n1 basename
+}
+
+while getopts "hf:" opt; do
+    case $opt in
+        h)
+            usage
+            exit 0
+            ;;
+        f)
+            PROVIDER=${OPTARG}
+            FAILOVER_SCRIPT=${PROVIDER}FailoverIP
+            if ! [ -f $DIR/scripts/$FAILOVER_SCRIPT ]; then
+                echo "FailoverIP script for '$PROVIDER' not exist"
+                echo "Available providers: "
+                failover_providers
+                exit 2
+            fi
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+shift $(($OPTIND -1))
+
+NAME=pve-migration-monitor
+cp $DIR/config/$NAME /etc/default/$NAME
+chmod 640 /etc/default/$NAME
+
+mkdir -p /etc/$NAME /etc/$NAME/down.d /etc/$NAME/up.d
+cp $DIR/scripts/* /etc/$NAME/
+cp $DIR/systemd/* /etc/systemd/system/
+
+mkdir -p $(grep RESOURCE_DIR $DIR/config/$NAME | sed 's/RESOURCE_DIR=//')
+
+if [ -n "$PROVIDER" ]; then
+    sed -i "s/^FAILOVERIP_SCRIPT=.*/FAILOVERIP_SCRIPT=${FAILOVER_SCRIPT}/" /etc/default/$NAME
+    ln -sf ../failoverip-down /etc/$NAME/down.d/10failoverip
+    ln -sf ../failoverip-up /etc/$NAME/up.d/10failoverip
+    case "${PROVIDER}" in
+        "Online" )
+            echo "Input API token for Online.net"
+            read api
+            sed -i "s/^FAILOVERIP_TOKEN=.*/FAILOVERIP_TOKEN=${api}/" /etc/default/$NAME
+            ;;
+    esac
+fi
+
+systemctl daemon-reload
+systemctl enable --now $NAME
+
+COMMANDS="jq curl inotifywait grep awk sed"
+MISSING=""
+for cmd in $COMMANDS; do
+    which $cmd > /dev/null || MISSING="$MISSING\n$cmd"
+done
+if [ -n "$MISSING" ]; then
+    echo -e "Following commands are missing:$MISSING"
+fi

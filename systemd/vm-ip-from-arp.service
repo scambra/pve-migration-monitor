@@ -1,0 +1,11 @@
+[Unit]
+Description=Generate resource files with VM/CT public ip, get from ARP table, for failover migration
+After=network-online.target
+Wants=network-online.target
+Wants=pve-cluster.service
+After=pve-cluster.service
+
+[Service]
+EnvironmentFile=/etc/default/pve-migration-monitor
+Type=oneshot
+ExecStart=/etc/pve-migration-monitor/vm-ip-from-arp -p $NIC

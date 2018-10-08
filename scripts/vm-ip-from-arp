@@ -1,0 +1,81 @@
+#! /bin/sh
+
+. /etc/default/pve-migration-monitor
+
+update_ips() {
+    ips=$2
+    if [ "$VERBOSE" ]; then
+        [ -n "$ips" ] && echo $1: $ips
+    else
+        file=$RESOURCE_DIR/$id.conf
+        sed -i '/^ip/d' $file
+        [ -n "$ips" ] && echo ip $ips >> $file
+    fi
+}
+
+usage() {
+    echo "$(basename $0) [-h] [-v] [-p] bridge"
+    echo "-h   Show this help"
+    echo "-v   Verbose, dry run, won't write resource files"
+    echo "-p   Ping failover ips before reading arp table"
+}
+
+get_vm_mac_addr() {
+    [ "$1" = "pct" ] && mac_prefix='hwaddr'
+    $1 config "$2" | awk '/bridge='$3'/ { print tolower($2) }' | \
+        sed -r "s/.*$mac_prefix=([^,]*),.*/\\1/g"
+}
+
+get_ip_from_mac_arp() {
+    arp -en -i $2 | awk '/'"$1"'/ { print $1 }'
+}
+
+while getopts "hvp" opt; do
+    case $opt in
+        h)
+            usage
+            exit 0
+            ;;
+        v)
+            VERBOSE=1
+            ;;
+        p)
+            PING=1
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+shift $(($OPTIND -1))
+
+if [ -z "$1" ]; then
+    usage
+    exit 2
+fi
+
+bridge=$1
+ip link show $bridge > /dev/null || exit 3
+
+if [ "$PING" ]; then
+    for ip in $($SCRIPT_DIR/$FAILOVERIP_SCRIPT ips); do
+        arp -d $ip > /dev/null 2>&1
+        ping -q -c 1 $ip > /dev/null
+    done
+fi
+
+
+for id in $(qm list | awk '/^[ ]*[0-9]+/ {print $1}'); do
+    mac=$(get_vm_mac_addr qm $id $bridge)
+    [ -n "$mac" ] && ip=$(get_ip_from_mac_arp $mac $bridge) || ip=""
+    update_ips $id $ip
+done
+
+for id in $(pct list | awk '/^[ ]*[0-9]+/ {print $1}'); do
+    mac=$(get_vm_mac_addr pct $id $bridge)
+    [ -n "$mac" ] && ip=$(get_ip_from_mac_arp $mac $bridge) || ip=""
+    update_ips $id $ip
+done
+
+exit 0

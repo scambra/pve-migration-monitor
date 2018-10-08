@@ -1,0 +1,36 @@
+#! /bin/sh
+
+. /etc/default/pve-migration-monitor
+
+if [ "$1" = "-v" ]; then
+    VERBOSE=1
+fi
+
+update_ips() {
+    ips=$2
+    if [ "$VERBOSE" ]; then
+        [ -n "$ips" ] && echo $1: $ips
+    else
+        file=$RESOURCE_DIR/$id.conf
+        sed -i '/^ip/d' $file
+        [ -n "$ips" ] && echo ip $ips >> $file
+    fi
+}
+
+filter_private_ips() {
+    echo "$1" | grep -Ev '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|127\.)'
+}
+
+for id in $(qm list | awk '/^[ ]*[0-9]+/ {print $1}'); do
+    ips=$(qm guest cmd $id network-get-interfaces 2> /dev/null | jq '.[] | ."ip-addresses"[] | select(."ip-address-type" == "ipv4") ."ip-address"' 2> /dev/null | sed 's/"//g')
+    ips=$(filter_private_ips "$ips")
+    update_ips $id "$ips"
+done
+
+for id in $(pct list | awk '/^[ ]*[0-9]+/ {print $1}'); do
+    ips=$(echo 'ip -o -4 addr show scope global' | pct enter $id | awk '{ print $4 }' | sed 's|/[0-9]*||g')
+    ips=$(filter_private_ips "$ips")
+    update_ips $id "$ips"
+done
+
+exit 0

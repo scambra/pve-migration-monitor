@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# 
+# Description:	Online.net REST API client for failover IP change.
+#
+# Author:	Pierre-Yves Landuré <pierre-yves.landure@biapy.fr>
+# Support:      contact@biapy.fr
+# License:      GNU General Public License (GPL)
+# Copyright:	(C) 2013 Biapy
+#
+# usage: ./OnlineFailoverIP {status|ips|set} <Failover IP> <Destination/Local IP>
+#
+#<API token>            : Online.net REST API token, read from /etc/default/failoverip
+#<Failover IP>          : Online.net failover IP address.
+#<Destination/Local IP> : Online.net failover IP destination IP.
+#
+
+. /etc/default/pve-migration-monitor
+API_BASE_URL='https://api.online.net/api/v1'
+
+usage() {
+    echo "usage: $0 <status|ips|set> <Failover IP> <Destination/Local IP>"
+    exit 1
+}
+
+request() {
+    method=$1
+    path=$2
+    data=$3
+    auth="Authorization: Bearer $FAILOVERIP_TOKEN"
+    json="X-Pretty-JSON: 1"
+    out=$(curl -s -X $method -H "$auth" -H "$json" ${data:+ --data "$data"} "$API_BASE_URL/$path")
+    if [ "$method" = "GET" ]; then
+        echo $out
+    elif [ "$out" != 'true' ]; then
+        echo $out | jq 'if (.error_description?) then .error_description else .error end'
+    fi
+}
+
+ACTION="$1"
+FAILOVER_IP="$2"
+DESTINATION_IP="$3"
+
+case "${ACTION}" in
+    "set" )
+        # Check the arguments passed to this script
+        if [ $# -ne 3 ]; then
+            usage
+        fi
+        out=$(request POST 'server/failover/edit' "source=${FAILOVER_IP}&destination=${DESTINATION_IP}")
+        if [ -z "$out" -o "$out" = '"Address already provisioned"' ]; then
+            logger -t $LOGGER_TAG "Migrated $FAILOVER_IP to $DESTINATION_IP"
+        else
+            logger -t $LOGGER_TAG "Migrating $FAILOVER_IP to $DESTINATION_IP failed: $out"
+            echo $out
+            exit 1
+        fi
+        ;;
+    "status" )
+        request GET 'server/failover' | jq
+        ;;
+    "ips" )
+        request GET 'server/failover' | jq '.[] .source' | sed 's/"//g'
+        ;;
+    * )
+        usage
+esac
+
+exit 0

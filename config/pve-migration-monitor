@@ -1,0 +1,18 @@
+# Interface with public IP address
+NIC=vmbr0
+
+# Directory where files with current failover IPs are saved
+# It should be in /etc/pve so it's shared in all cluster's hosts
+RESOURCE_DIR=/etc/pve/failoverip
+
+# Directory with scripts
+SCRIPT_DIR=/etc/pve-migration-monitor
+
+# Tag option for logger
+LOGGER_TAG=pve-migration-monitor
+
+# Script for failover IPs provider, it will query and change failover IP with API
+FAILOVERIP_SCRIPT=
+
+# API token for failover script
+FAILOVERIP_TOKEN=

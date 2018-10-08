@@ -1,0 +1,10 @@
+[Unit]
+Description=Generate resource files with VM/CT public ip, read from VM guest agent and CT commands, for failover migration
+After=network-online.target
+Wants=network-online.target
+Wants=pve-cluster.service
+After=pve-cluster.service
+
+[Service]
+Type=oneshot
+ExecStart=/etc/pve-migration-monitor/vm-public-ip
