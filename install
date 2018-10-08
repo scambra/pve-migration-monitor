@@ -51,9 +51,23 @@ if [ -n "$PROVIDER" ]; then
     ln -sf ../failoverip-up /etc/$NAME/up.d/10failoverip
     case "${PROVIDER}" in
         "Online" )
-            echo "Input API token for Online.net"
+            echo "Input API token for Online.net:"
             read api
             sed -i "s/^FAILOVERIP_TOKEN=.*/FAILOVERIP_TOKEN=${api}/" /etc/default/$NAME
+            ;;
+        "hetzner" )
+            echo "Input hetzner's user:"
+            read user
+            stty -echo
+            echo "Input hetzner's password:"
+            read pass
+            stty echo
+            cat >> /etc/default/$NAME <<EOF
+
+# User and password for hetzner failover script
+FAILOVERIP_USER=$user
+FAILOVERIP_PASS=$pass
+EOF
             ;;
     esac
 fi

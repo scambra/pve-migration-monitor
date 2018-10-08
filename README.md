@@ -19,7 +19,7 @@ Failover IP
 Pve-migration-monitor comes with scripts to change failover IP on VM/CT when
 is migrated, failoverip-down and failoverip-up (linked to down.d/10failoverip
 and up.d/10failoverip). Failoverip-up script use another script to change
-failover IP with API, a script for Online.net API is provided.
+failover IP with API, scripts for Online.net API and Hetzner API are provided.
 
 Install script can be run with -p <provider> argument to enable these scripts,
 and it will ask for online.net api token.

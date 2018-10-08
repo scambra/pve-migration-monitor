@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+# 
+# Description:	Online.net REST API client for failover IP change.
+#
+# Author:       Sergio Cambra
+# Support:      https://github.com/scambra/pve-migration-monitor
+# License:      GNU General Public License (GPL)
+# Copyright:    (C) 2018 Sergio Cambra
+#
+# usage: ./hetznerFailoverIP {status|ips|set} <Failover IP> <Destination/Local IP>
+#
+#<API token>            : Online.net REST API token, read from /etc/default/failoverip
+#<Failover IP>          : Online.net failover IP address.
+#<Destination/Local IP> : Online.net failover IP destination IP.
+#
+
+. /etc/default/pve-migration-monitor
+API_BASE_URL='https://robot-ws.your-server.de'
+
+usage() {
+    echo "usage: $0 <status|ips|set> <Failover IP> <Destination/Local IP>"
+    exit 1
+}
+
+request() {
+    method=$1
+    path=$2
+    data=$3
+    out=$(curl -s -X $method -u "$FAILOVERIP_USER:$FAILOVERIP_PASS" ${data:+ --data "$data"} "$API_BASE_URL/$path")
+    if [ "$method" = "GET" ]; then
+        echo $out
+    else
+        echo "$out" | jq '.error .message' | grep -v null
+    fi
+}
+
+ACTION="$1"
+FAILOVER_IP="$2"
+DESTINATION_IP="$3"
+
+case "${ACTION}" in
+    "set" )
+        # Check the arguments passed to this script
+        if [ $# -ne 3 ]; then
+            usage
+        fi
+        out=$(request POST "failover/${FAILOVER_IP}" "active_server_ip=${DESTINATION_IP}")
+        if [ -z "$out" ]; then
+            logger -t $LOGGER_TAG "Migrated $FAILOVER_IP to $DESTINATION_IP"
+        else
+            logger -t $LOGGER_TAG "Migrating $FAILOVER_IP to $DESTINATION_IP failed: $out"
+            echo $out
+            exit 1
+        fi
+        ;;
+    "status" )
+        request GET 'failover' | jq
+        ;;
+    "ips" )
+        request GET 'failover' | jq '.[] .failover .ip' | sed 's/"//g'
+        ;;
+    * )
+        usage
+esac
+
+exit 0
