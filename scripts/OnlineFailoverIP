@@ -3,10 +3,12 @@
 # 
 # Description:	Online.net REST API client for failover IP change.
 #
-# Author:	Pierre-Yves Landuré <pierre-yves.landure@biapy.fr>
-# Support:      contact@biapy.fr
+# Author:       Sergio Cambra
+# Support:      https://github.com/scambra/pve-migration-monitor
 # License:      GNU General Public License (GPL)
-# Copyright:	(C) 2013 Biapy
+# Copyright:    (C) 2018 Sergio Cambra
+#
+# Acknoledgement to Pierre-Yves Landuré for https://github.com/biapy/howto.biapy.com/blob/master/various/OnlineFailoverIP
 #
 # usage: ./OnlineFailoverIP {status|ips|set} <Failover IP> <Destination/Local IP>
 #
