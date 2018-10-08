@@ -52,5 +52,5 @@ frequency.
 Acknowledgements
 ================
 
-To @biapy for [OnlineFailoverIP](https://github.com/biapy/howto.biapy.com/blob/master/various/OnlineFailoverIP) script, which I based mine on.  
-To @yennor for [proxmox hetzner failover ip scripts](https://github.com/yennor/proxmox-hetzner-failover-ip), which I used as base for pve-migration-monitor.
+To [@biapy](https://github.com/biapy) for [OnlineFailoverIP](https://github.com/biapy/howto.biapy.com/blob/master/various/OnlineFailoverIP) script, which I based mine on.  
+To [@yennor](https://github.com/yennor) for [proxmox hetzner failover ip scripts](https://github.com/yennor/proxmox-hetzner-failover-ip), which I used as base for pve-migration-monitor.
