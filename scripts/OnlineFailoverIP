@@ -12,9 +12,8 @@
 #
 # usage: ./OnlineFailoverIP {status|ips|set} <Failover IP> <Destination/Local IP>
 #
-#<API token>            : Online.net REST API token, read from /etc/default/failoverip
 #<Failover IP>          : Online.net failover IP address.
-#<Destination/Local IP> : Online.net failover IP destination IP.
+#<Destination/Local IP> : Online.net failover IP destination IP (server ip).
 #
 
 . /etc/default/pve-migration-monitor
