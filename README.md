@@ -10,7 +10,8 @@ Pve-migration-monitor is a shell script, and it requires inotifywait, curl and j
 awk and sed, which are usually installed in every linux system.
 
 Install script will copy scripts to /etc/pve-migration-monitor and config file
-to /etc/default/pve-migration-monitor.
+to /etc/default/pve-migration-monitor. It will add pve-migration-monitor service
+to systemd and enable it.
 
 Failover IP
 ===========
