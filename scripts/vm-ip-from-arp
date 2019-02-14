@@ -8,7 +8,7 @@ update_ips() {
         [ -n "$ips" ] && echo $1: $ips
     else
         file=$RESOURCE_DIR/$id.conf
-        sed -i '/^ip/d' $file
+        [ -f $file ] && sed -i '/^ip/d' $file
         [ -n "$ips" ] && echo ip $ips >> $file
     fi
 }
