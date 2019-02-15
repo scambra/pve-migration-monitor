@@ -1,7 +1,7 @@
 #! /bin/sh
 
+. /etc/default/pve-migration-monitor
+
 # TODO. we should check if the host is already on that computer, and then put up the routes and switch over the routing
 
-script_dir=$(dirname $0)
-
-inotifywait -q -m -e moved_to,moved_from --format "%e %w/%f" --exclude '\.conf\.tmp\.[0-9]+$' /etc/pve/qemu-server /etc/pve/lxc | while read file; do $script_dir/dispatch $file; done
+inotifywait -q -m -e moved_to,moved_from --format "%e %w/%f" --exclude '\.conf\.tmp\.[0-9]+$' /etc/pve/qemu-server /etc/pve/lxc $RESOURCE_DIR | while read file; do $SCRIPT_DIR/dispatch $file; done
