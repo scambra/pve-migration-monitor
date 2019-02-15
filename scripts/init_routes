@@ -1,0 +1,10 @@
+#! /bin/sh
+
+. /etc/default/pve-migration-monitor
+
+for file in "$RESOURCE_DIR"/*; do
+    host=$(basename $file)
+    if [ -f /etc/pve/qemu-server/$host -o -f /etc/pve/lxc/$host ]; then
+        $SCRIPT_DIR/dispatch MOVED_TO $file
+    fi
+done
