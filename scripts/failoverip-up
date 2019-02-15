@@ -9,7 +9,9 @@ if [ -f $RESOURCE_DIR/$host ]; then
     host_ip=$(awk '/^ip/ { print $2 }' $RESOURCE_DIR/$host)
     local_ip=$(ip -o -4 addr show $NIC | awk '{ print $4 }' | sed 's|/[0-9]*||g' | head -n 1)
 
-    $SCRIPT_DIR/$FAILOVERIP_SCRIPT set $host_ip $local_ip
-    logger -t $LOGGER_TAG "Host $host migrated here. Bring route up for $host_ip in $NIC"
-    ip route add $host_ip dev $NIC
+    if [ -n "$host_ip" -a -n "$local_ip" ]; then
+        $SCRIPT_DIR/$FAILOVERIP_SCRIPT set $host_ip $local_ip
+        logger -t $LOGGER_TAG "Host $host migrated here. Bring route up for $host_ip in $NIC"
+        ip route add $host_ip dev $NIC
+    fi
 fi
