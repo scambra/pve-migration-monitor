@@ -1,7 +1,7 @@
 [Unit]
 Description=Monitor PVE VM/CT migrations
 ConditionPathExists=/etc/pve-migration-monitor/migration-monitor
-RequiresMountsFor=/etc/pve
+After=pve-cluster.service
 
 [Service]
 ExecStart=/etc/pve-migration-monitor/migration-monitor
