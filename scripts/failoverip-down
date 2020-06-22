@@ -6,10 +6,12 @@ file=$1
 host=$(basename "$file")
 
 if [ -f $RESOURCE_DIR/$host ]; then 
-    host_ip=$(awk '/^ip/ { print $2 }' $RESOURCE_DIR/$host)
-    if [ -n "$host_ip" ]; then
-        logger -t $LOGGER_TAG "Host $host Migrated away. Bring route for $host_ip down"
-        # The host was moved away
-        ip route del $host_ip
+    host_ips=$(sed 's/^ip //' $RESOURCE_DIR/$host)
+    if [ -n "$host_ips" ]; then
+        logger -t $LOGGER_TAG "Host $host migrated away. Bring route for $host_ips down"
+        for host_ip in $host_ips; do
+            # The host was moved away
+            ip route del $host_ip
+        done
     fi
 fi

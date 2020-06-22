@@ -65,17 +65,18 @@ if [ "$PING" ]; then
     done
 fi
 
-
-for id in $(qm list | awk '/^[ ]*[0-9]+/ {print $1}'); do
-    mac=$(get_vm_mac_addr qm $id $bridge)
-    [ -n "$mac" ] && ip=$(get_ip_from_mac_arp $mac $bridge) || ip=""
-    update_ips $id $ip
-done
-
-for id in $(pct list | awk '/^[ ]*[0-9]+/ {print $1}'); do
-    mac=$(get_vm_mac_addr pct $id $bridge)
-    [ -n "$mac" ] && ip=$(get_ip_from_mac_arp $mac $bridge) || ip=""
-    update_ips $id $ip
+for cmd in qm pct; do
+  for id in $($cmd list | awk '/^[ ]*[0-9]+/ {print $1}'); do
+    macs=$(get_vm_mac_addr $cmd $id $bridge)
+    vm_ips=""
+    if [ -n "$macs" ]; then
+      for mac in $macs; do
+        ips=$(get_ip_from_mac_arp $mac $bridge)
+	vm_ips="$vm_ips $ips"
+      done
+    fi
+    update_ips $id "$vm_ips"
+  done
 done
 
 exit 0
