@@ -10,10 +10,15 @@ if [ -f $RESOURCE_DIR/$host ]; then
     local_ip=$(ip -o -4 addr show $NIC | awk '{ print $4 }' | sed 's|/[0-9]*||g' | head -n 1)
 
     if [ -n "$host_ips" -a -n "$local_ip" ]; then
-        logger -t $LOGGER_TAG "Host $host migrated here. Bring route up for $host_ips in $NIC"
+        logger -t $LOGGER_TAG "Host $host migrated here. Launch script to move $host_ips to $local_ip"
         for host_ip in $host_ips; do
             $SCRIPT_DIR/$FAILOVERIP_SCRIPT set $host_ip $local_ip
-            ip route add $host_ip dev $NIC
         done
+        if $HANDLE_ROUTES ; then
+            logger -t $LOGGER_TAG "Host $host migrated here. Bring route up for $host_ips in $NIC"
+            for host_ip in $host_ips; do
+                ip route add $host_ip dev $NIC
+            done
+        fi
     fi
 fi
