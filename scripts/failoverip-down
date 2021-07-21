@@ -5,13 +5,15 @@ file=$1
 
 host=$(basename "$file")
 
-if [ -f $RESOURCE_DIR/$host ]; then 
-    host_ips=$(sed 's/^ip //' $RESOURCE_DIR/$host)
-    if [ -n "$host_ips" ]; then
-        logger -t $LOGGER_TAG "Host $host migrated away. Bring route for $host_ips down"
-        for host_ip in $host_ips; do
-            # The host was moved away
-            ip route del $host_ip
-        done
+if $HANDLE_ROUTES ; then
+    if [ -f $RESOURCE_DIR/$host ]; then 
+        host_ips=$(sed 's/^ip //' $RESOURCE_DIR/$host)
+        if [ -n "$host_ips" ]; then
+            logger -t $LOGGER_TAG "Host $host migrated away. Bring route for $host_ips down"
+            for host_ip in $host_ips; do
+                # The host was moved away
+                ip route del $host_ip
+            done
+        fi
     fi
 fi
