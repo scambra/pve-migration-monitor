@@ -4,17 +4,21 @@
 action=$1
 file=$2
 
+logger -t $LOGGER_TAG "Dispatch: detected action $1 on file $2"
+
 if [ "$action" = "MOVED_FROM" ]; then
     script_dir=$SCRIPT_DIR/down.d
 elif grep -q 'lock: migrate' "$file"; then
     # The host was moved here. Note that that event also gets called when moving away
     # but config file will have lock: migrate
     # that's why we check lock: migrate in qemu-server config
+    logger -t $LOGGER_TAG "Dispatch: vm is locked (moving away), exiting !"
     exit
 else
     script_dir=$SCRIPT_DIR/up.d
 fi
 
 for script in $script_dir/*; do
+    logger -t $LOGGER_TAG "Dispatch: launching $script $file"
     [ -x $script ] && $script $file
 done
