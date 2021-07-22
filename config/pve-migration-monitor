@@ -16,3 +16,6 @@ FAILOVERIP_SCRIPT=
 
 # API token for failover script
 FAILOVERIP_TOKEN=
+
+# Whether to handle routes for Online (set to true or false)
+HANDLE_ROUTES=true
