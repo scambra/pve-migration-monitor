@@ -1,9 +1,16 @@
 #! /bin/sh
 
 . /etc/default/pve-migration-monitor
+if [ ! -d $RESOURCE_DIR ] ; then
+    echo "Directory $RESOURCE_DIR does not exist, exiting !"
+    exit 1
+fi
 
 if [ "$1" = "-v" ]; then
     VERBOSE=1
+else
+    # We need to clear leftover files for VMs which are not on this host any more
+    find /etc/pve/failoverip -type f -name '*.conf' -delete
 fi
 
 update_ips() {
@@ -12,7 +19,6 @@ update_ips() {
         [ -n "$ips" ] && echo $1: $ips
     else
         file=$RESOURCE_DIR/$id.conf
-        [ -f $file ] && sed -i '/^ip/d' $file
         [ -n "$ips" ] && echo ip $ips >> $file
     fi
 }
