@@ -10,7 +10,7 @@
 #
 # Acknoledgement to Pierre-Yves Landuré for https://github.com/biapy/howto.biapy.com/blob/master/various/OnlineFailoverIP
 #
-# usage: ./OnlineFailoverIP {status|ips|set} <Failover IP> <Destination/Local IP>
+# usage: ./OnlineFailoverIP (status | ips | check <Failover IP> | set <Failover IP> <Destination IP>)
 #
 #<Failover IP>          : Online.net failover IP address.
 #<Destination/Local IP> : Online.net failover IP destination IP (server ip).
@@ -20,7 +20,12 @@
 API_BASE_URL='https://api.online.net/api/v1'
 
 usage() {
-    echo "usage: $0 <status|ips|set> <Failover IP> <Destination/Local IP>"
+    echo "Usage: $0 (status | ips | check <Failover IP> | set <Failover IP> <Destination IP>)"
+    echo "Actions:"
+    echo "  status: show all failover IP addresses information"
+    echo "  ips:    list all failover IP addresses owned"
+    echo "  check:  check if that failover IP's destination is the current host"
+    echo "  set:    set failover IP's destination address"
     exit 1
 }
 
@@ -38,16 +43,18 @@ request() {
     fi
 }
 
+
 ACTION="$1"
-FAILOVER_IP="$2"
-DESTINATION_IP="$3"
 
 case "${ACTION}" in
+
     "set" )
         # Check the arguments passed to this script
         if [ $# -ne 3 ]; then
             usage
         fi
+        FAILOVER_IP="$2"
+        DESTINATION_IP="$3"
         out=$(request POST 'server/failover/edit' "source=${FAILOVER_IP}&destination=${DESTINATION_IP}")
         if [ -z "$out" -o "$out" = '"Address already provisioned"' ]; then
             logger -t $LOGGER_TAG "Migrated $FAILOVER_IP to $DESTINATION_IP"
@@ -57,12 +64,31 @@ case "${ACTION}" in
             exit 1
         fi
         ;;
+
     "status" )
         request GET 'server/failover' | jq
         ;;
+
     "ips" )
         request GET 'server/failover' | jq '.[] .source' | sed 's/"//g'
         ;;
+
+    "check" )
+        if [ $# -ne 2 ]; then
+            usage
+        fi
+        IP_TO_CHECK=$2
+        IP_local=$(ifconfig $NIC | awk ' /inet/ { print $2 }')
+        IP_online=$(request GET 'server/failover' |jq ".[]  | select(.source == \"$IP_TO_CHECK\") | .destination" |sed 's/\"//g')
+        if [ "$IP_local" = "$IP_online" ]; then
+            echo "Failover IP $IP_TO_CHECK is on this host"
+            exit 0
+        else
+            echo "Failover IP $IP_TO_CHECK is NOT on this host !"
+            exit 2
+        fi
+        ;;
+
     * )
         usage
 esac
