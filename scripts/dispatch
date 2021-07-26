@@ -16,15 +16,14 @@ elif grep -q 'lock: migrate' "$file"; then
     exit
 else
     script_dir=$SCRIPT_DIR/up.d
-fi
-
-# When live migrating from a hypervisor, the config file for the vm is moved 
-# several times, then disappears.
-# We wait one second to check that this is not happening here.
-wait 1
-if [ ! -f $file ] ; then
-    logger -t $LOGGER_TAG "Dispatch: file $file disappeared, exiting"
-    exit
+    # When live migrating from a hypervisor, the config file for the vm is moved 
+    # several times, then disappears.
+    # We wait one second to check that this is not happening here.
+    wait 1
+    if [ ! -f $file ] ; then
+        logger -t $LOGGER_TAG "Dispatch: file $file disappeared, exiting !"
+        exit
+    fi
 fi
 
 for script in $script_dir/*; do
