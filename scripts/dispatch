@@ -18,15 +18,6 @@ else
     script_dir=$SCRIPT_DIR/up.d
 fi
 
-# When live migrating from a hypervisor, the config file for the vm is moved 
-# several times, then disappears.
-# We wait one second to check that this is not happening here.
-wait 1
-if [ ! -f $file ] ; then
-    logger -t $LOGGER_TAG "Dispatch: file $file disappeared, exiting"
-    exit
-fi
-
 for script in $script_dir/*; do
     logger -t $LOGGER_TAG "Dispatch: launching $script $file"
     [ -x $script ] && $script $file
