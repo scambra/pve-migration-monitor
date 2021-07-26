@@ -1,6 +1,10 @@
-#! /bin/sh
-
+#! /bin/bash
+  
 . /etc/default/pve-migration-monitor
+if [ ! -d $RESOURCE_DIR ] ; then
+    echo "Directory $RESOURCE_DIR does not exist, exiting !"
+    exit 1
+fi
 
 if [ "$1" = "-v" ]; then
     VERBOSE=1
@@ -21,16 +25,26 @@ filter_private_ips() {
     echo "$1" | grep -Ev '^(192\.168|10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|169\.254|127\.)'
 }
 
+ids_used=""
+
 for id in $(qm list | awk '/^[ ]*[0-9]+/ {print $1}'); do
+    ids_used="$ids_used|$id"
     ips=$(qm guest cmd $id network-get-interfaces 2> /dev/null | jq '.[] | ."ip-addresses"[] | select(."ip-address-type" == "ipv4") ."ip-address"' 2> /dev/null | sed 's/"//g')
     ips=$(filter_private_ips "$ips")
     update_ips $id "$ips"
 done
 
 for id in $(pct list | awk '/^[ ]*[0-9]+/ {print $1}'); do
+    ids_used="$ids_used|$id"
     ips=$(echo 'ip -o -4 addr show scope global' | pct enter $id | awk '{ print $4 }' | sed 's|/[0-9]*||g')
     ips=$(filter_private_ips "$ips")
     update_ips $id "$ips"
 done
+
+# remove leading pipe character
+ids_used=${ids_used:1}
+
+# We need to clear leftover files for VMs which are not on this host any more
+[ -n $ids_used ] && find $RESOURCE_DIR -type f -regextype posix-extended -not -regex ".*($ids_used)\.conf" -delete
 
 exit 0
