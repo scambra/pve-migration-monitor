@@ -5,15 +5,23 @@ file=$1
 
 host=$(basename "$file")
 
-if [ -f $RESOURCE_DIR/$host ]; then 
+if [ -f $RESOURCE_DIR/$host ]; then
     host_ips=$(sed 's/^ip //' $RESOURCE_DIR/$host)
     local_ip=$(ip -o -4 addr show $NIC | awk '{ print $4 }' | sed 's|/[0-9]*||g' | head -n 1)
 
     if [ -n "$host_ips" -a -n "$local_ip" ]; then
         logger -t $LOGGER_TAG "Host $host migrated here. Launch script to move $host_ips to $local_ip"
-        for host_ip in $host_ips; do
-            $SCRIPT_DIR/$FAILOVERIP_SCRIPT set $host_ip $local_ip
-        done
+        if [ "$FAILOVERIP_SCRIPT" = OnlineFailoverIP ]; then
+            # Online API allows moving several "failover IP" addresses to the same destination at the same time
+            # It is also mandatory when using a MAC group (one MAC address for several failover IP addresses)
+            # The syntax for the API call is : source=IP1[,IP2,IP3...]
+            host_ips_comma=$(echo $host_ips | sed 's/ /,/g')
+            $SCRIPT_DIR/$FAILOVERIP_SCRIPT set $host_ips_comma $local_ip
+        else
+            for host_ip in $host_ips; do
+                $SCRIPT_DIR/$FAILOVERIP_SCRIPT set $host_ip $local_ip
+            done
+        fi
         if $HANDLE_ROUTES ; then
             logger -t $LOGGER_TAG "Host $host migrated here. Bring route up for $host_ips in $NIC"
             for host_ip in $host_ips; do
