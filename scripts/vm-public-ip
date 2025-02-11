@@ -33,4 +33,18 @@ for id in $(pct list | awk '/^[ ]*[0-9]+/ {print $1}'); do
     update_ips $id "$ips"
 done
 
+#Remove conf files if VM doesn't exist anymore
+vm_array=$(jq '.ids | keys[]' /etc/pve/.vmlist)
+
+#Add a random sleep to avoid sync issues
+sleep $((RANDOM % 60))
+
+for file in $RESOURCE_DIR/*.conf; do
+    filename=$(basename "$file" .conf)
+    if [[ ! "$vm_array[@]" =~ $filename ]]; then
+        rm -f $file
+        logger -t $LOGGER_TAG "$file removed (ID doesn't exist anymore)"
+    fi
+done
+
 exit 0
