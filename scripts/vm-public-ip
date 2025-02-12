@@ -12,8 +12,12 @@ update_ips() {
         [ -n "$ips" ] && echo $1: $ips
     else
         file=$RESOURCE_DIR/$id.conf
-        [ -f $file ] && sed -i '/^ip/d' $file
-        [ -n "$ips" ] && echo ip $ips >> $file
+        # Only alter the file if we are really going to change its contents
+        if [ "$(cat $file)" != "ip $ips" ]
+        then
+            [ -f $file ] && sed -i '/^ip/d' $file
+            [ -n "$ips" ] && echo ip $ips >> $file
+        fi
     fi
 }
 
