@@ -4,6 +4,13 @@
 action=$1
 file=$2
 
+if [[ $(basename $file) = sed* ]]
+then
+    # If file name starts with "sed", it is a temporary file created by sed command
+    # from the vm-public-ip script, ignore the file
+    exit
+fi
+
 logger -t $LOGGER_TAG "Dispatch: detected action $1 on file $2"
 
 if [ "$action" = "MOVED_FROM" ]; then
